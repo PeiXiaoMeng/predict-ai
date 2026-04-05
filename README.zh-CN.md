@@ -1,82 +1,81 @@
-# 🔮 Predict App — AI-Powered Product Analysis Platform
+# 🔮 Predict App — AI驱动的产品前景分析平台
 
-> **Input any product idea and let 4 AI agents automatically complete competitor research, market assessment, ROI estimation, and strategy planning.**
+> **输入任意产品描述，4个AI Agent自动完成竞品研究、市场判断、ROI估算与策略建议。**
 >
-> Works for SaaS, apps, e-commerce, hardware, and content products — **category-agnostic**.
+> 完美适配 SaaS / App / 电商 / 硬件 / 内容产品 —— **不限品类**。
 
-[English](README.md) | [Chinese](README.zh-CN.md)
+[English](README.md) | [中文](README.zh-CN.md)
 
 ---
 
-## 📋 Overview
+## 📋 功能概览
 
-| Module | Function | Output |
+| 模块 | 功能 | 输出 |
 |------|------|------|
-| 🔍 **Competitor Research Agent** | Finds similar products, classifies segments, extracts differentiation points | Competitor map (scatter chart) + comparison table |
-| 📈 **Market Assessment Agent** | Aggregates search trends, traffic, content heat, and review sentiment | Track heat / demand strength / competition crowdedness |
-| 💰 **ROI Estimation Agent** | Builds conservative / baseline / aggressive financial scenarios | Payback period + investment recommendation + stop-loss rule |
-| 🎯 **Strategy Agent** | Produces launch strategy + MVP do/don’t list + roadmap | Stage-based delivery milestones |
+| 🔍 **竞品研究 Agent** | 自动发现相似产品，分类，提炼差异点 | 竞品地图（散点图）+ 对比表 |
+| 📈 **市场判断 Agent** | 汇总搜索趋势、流量、内容热度、评论情绪 | 赛道热度 / 需求强度 / 竞争拥挤度 |
+| 💰 **ROI 估算 Agent** | 保守 / 基准 / 激进三档财务建模 | 回本周期 + 投入建议 + 止损线 |
+| 🎯 **策略建议 Agent** | 上线策略 + MVP 做/不做清单 + 路线图 | 分阶段交付里程碑 |
 
 ---
 
-### 📸 Screenshots
+### 📸 截图展示
 
-![Product analysis flow - input form](/static/Screenshot/截图1.png)
-*Figure 1: Product input form*
+![产品分析流程 - 输入表单](/static/Screenshot/截图1.png)
+*图1：产品分析输入表单*
 
-![Competitor map visualization - market positioning](/static/Screenshot/截图2.png)
-*Figure 2: Competitor map and market positioning*
+![竞品地图可视化 - 市场定位](/static/Screenshot/截图2.png)
+*图2：竞品地图与市场定位*
 
-![Market health dashboard - key metrics](/static/Screenshot/截图3.png)
-*Figure 3: Market dashboard with core indicators*
+![市场评分仪表盘 - 核心指标](/static/Screenshot/截图3.png)
+*图3：市场健康度核心指标面板*
 
-![ROI scenario comparison and strategy suggestions](/static/Screenshot/截图4.png)
-*Figure 4: ROI scenarios and strategy recommendations*
+![ROI三档对比与策略建议](/static/Screenshot/截图4.png)
+*图4：ROI 三档场景与策略建议*
 
 ---
 
-### 🏗️ System Architecture
+### 🏗️ 系统架构
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                          Frontend                               │
+│                          前端                                   │
 │            React 18 + TypeScript + Vite + TailwindCSS           │
 │                                                                 │
 │  ┌──────────┐  ┌────────────┐  ┌──────────┐  ┌──────────────┐  │
-│  │InputForm │  │AgentStatus │  │  Charts  │  │ExportButtons │  │
+│  │输入表单  │  │Agent状态   │  │可视化图表│  │导出功能      │  │
 │  └────┬─────┘  └────────────┘  └──────────┘  └──────────────┘  │
 │       │  POST /v1/analyze                                       │
 ├───────┼─────────────────────────────────────────────────────────┤
-│       │           Vite Proxy (dev) / Nginx (prod)               │
+│       │           Vite反向代理 (开发) / Nginx (生产)            │
 ├───────┼─────────────────────────────────────────────────────────┤
-│       ▼                     Backend                              │
+│       ▼                     后端                               │
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │                    FastAPI (Python)                    │    │
+│  │                    FastAPI (Python)                      │    │
 │  │                                                         │    │
-│  │  ┌──────────────── Orchestrator ────────────────────┐   │    │
+│  │  ┌──────────────── 编排器 ────────────────────────┐   │    │
 │  │  │                                                  │   │    │
 │  │  │  ┌─────────────┐  ┌─────────────┐               │   │    │
-│  │  │  │ Competitor  │  │   Market    │ (parallel)    │   │    │
-│  │  │  │   Agent     │  │   Agent     │               │   │    │
+│  │  │  │  竞品研究    │  │   市场判断   │               │   │    │
+│  │  │  │    Agent    │  │   Agent     │ (并行执行)  │   │    │
 │  │  │  └──────┬──────┘  └──────┬──────┘               │   │    │
 │  │  │         └────────┬───────┘                       │   │    │
 │  │  │                  ▼                               │   │    │
 │  │  │           ┌────────────┐                         │   │    │
-│  │  │           │ ROI Agent  │ (depends on market)     │   │    │
+│  │  │           │ ROI估算    │   (依赖市场数据)        │   │    │
 │  │  │           └──────┬─────┘                         │   │    │
 │  │  │                  ▼                               │   │    │
 │  │  │          ┌──────────────┐                        │   │    │
-│  │  │          │Strategy Agent│ (depends on all above) │   │    │
+│  │  │          │策略建议Agent  │   (依赖全部上游)       │   │    │
 │  │  │          └──────────────┘                        │   │    │
 │  │  └──────────────────────────────────────────────────┘   │    │
 │  │                                                         │    │
-│  │  ┌──────────────── Tools Layer ─────────────────────┐   │    │
-│  │  │ SearchTrends │ Traffic │ ContentHeat             │   │    │
-│  │  │ ReviewSentiment │ CompetitorSnapshot             │   │    │
+│  │  ┌──────────────── 工具层 ────────────────────────┐   │    │
+│  │  │ 搜索热度 │ 流量 │ 内容热度 │ 评论情绪 │ 竞品   │   │    │
 │  │  └─────────────────────────────────────────────────┘   │    │
 │  │                                                         │    │
-│  │  ┌──────────────── Services ────────────────────────┐   │    │
-│  │  │ Report Export (Markdown / JSON)                  │   │    │
+│  │  ┌──────────────── 服务层 ────────────────────────┐   │    │
+│  │  │  报告导出 (Markdown / JSON)                      │   │    │
 │  │  └─────────────────────────────────────────────────┘   │    │
 │  └─────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────────┘
@@ -84,16 +83,16 @@
 
 ---
 
-### 📂 Project Structure
+### 📂 目录结构
 
 ```
 predict-app/
-├── .env                           # Runtime env vars (API keys, toggles)
-├── .env.example                   # Env template
-├── README.md                      # English documentation
-├── README.zh-CN.md                # Chinese documentation
+├── .env                           # 运行时环境变量（API Key 等）
+├── .env.example                   # 环境变量模板
+├── README.md                      # 英文文档
+├── README.zh-CN.md                # 中文文档（本文件）
 ├── docs/
-│   └── architecture.md            # Full architecture and ROI formulas
+│   └── architecture.md            # 完整架构与 ROI 公式
 ├── static/
 │   └── Screenshot/
 │       ├── 截图1.png
@@ -101,24 +100,24 @@ predict-app/
 │       ├── 截图3.png
 │       └── 截图4.png
 ├── backend/
-│   ├── requirements.txt           # Python dependencies
+│   ├── requirements.txt           # Python 依赖
 │   └── app/
 │       ├── __init__.py
-│       ├── main.py                # FastAPI entrypoint
-│       ├── orchestrator.py        # Agent orchestration flow
-│       ├── schemas.py             # Request/response schemas
-│       ├── api_log.py             # API call log utilities
+│       ├── main.py                # FastAPI 入口
+│       ├── orchestrator.py        # Agent 编排流程
+│       ├── schemas.py             # 请求/响应 Schema
+│       ├── api_log.py             # API 调用日志工具
 │       ├── agents/
 │       │   ├── __init__.py
-│       │   ├── prompts.py         # Prompt templates
-│       │   └── workflow.py        # Agent execution logic
+│       │   ├── prompts.py         # Prompt 模板
+│       │   └── workflow.py        # Agent 执行逻辑
 │       ├── routers/
 │       │   ├── __init__.py
-│       │   ├── debug.py           # Debug endpoints
-│       │   └── _debug_ui.html     # Debug UI page
+│       │   ├── debug.py           # Debug 路由
+│       │   └── _debug_ui.html     # Debug UI 页面
 │       ├── services/
 │       │   ├── __init__.py
-│       │   └── report_exporter.py # Markdown/JSON export service
+│       │   └── report_exporter.py # Markdown/JSON 导出服务
 │       └── tools/
 │           ├── __init__.py
 │           ├── base.py
@@ -152,26 +151,26 @@ predict-app/
 │           ├── MarketGauge.tsx
 │           ├── ROITable.tsx
 │           └── StrategyRoadmap.tsx
-└── .venv/                         # Local Python virtual environment
+└── .venv/                         # 本地 Python 虚拟环境
 ```
 
 ---
 
-### 🛠️ Tech Stack
+### 🛠️ 技术栈
 
-| Layer | Technology | Version |
+| 层级 | 技术 | 版本 |
 |------|------|------|
-| **Frontend** | React + TypeScript + Vite | 18.x / 5.6 / 6.x |
+| **前端** | React + TypeScript + Vite | 18.x / 5.6 / 6.x |
 | | TailwindCSS + Recharts | 3.4 / 2.x |
-| **Backend** | FastAPI + Pydantic | 0.115 / v2.9 |
+| **后端** | FastAPI + Pydantic | 0.115 / v2.9 |
 | | Python + Uvicorn | 3.10+ / 0.30 |
-| **Data** | 5 pluggable tools | Mixed real/mock |
+| **数据** | 5个可插拔工具 | 真实/Mock混合 |
 
 ---
 
-### 🚀 Quick Start
+### 🚀 快速启动
 
-#### Start backend
+#### 后端启动
 
 ```bash
 cd predict-app
@@ -179,12 +178,12 @@ pip install -r backend/requirements.txt
 uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-**Endpoints:**
-- http://127.0.0.1:8000/health → health check
-- http://127.0.0.1:8000/docs → Swagger API docs
-- http://127.0.0.1:8000/debug/ui → real-time API logs
+**访问端点：**
+- http://127.0.0.1:8000/health → 健康检查
+- http://127.0.0.1:8000/docs → Swagger API文档
+- http://127.0.0.1:8000/debug/ui → 实时API日志
 
-#### Start frontend
+#### 前端启动
 
 ```bash
 cd frontend
@@ -192,78 +191,65 @@ npm install
 npm run dev
 ```
 
-**URL:** http://localhost:3000
+**访问地址：** http://localhost:3000
 
 ---
 
-### 📡 API Example
+### 📡 API调用示例
 
-**Request:**
+**请求：**
 ```json
 POST /v1/analyze
 {
-  "product_name": "Smart Accounting App",
-  "product_description": "An auto-bookkeeping app for young professionals, with bank API-based expense categorization",
-  "target_users": ["young professionals"],
+  "product_name": "智能记账App",
+  "product_description": "为年轻上班族提供的自动记账工具，通过银行API自动分类消费",
+  "target_users": ["年轻上班族"],
   "budget_monthly": 8000
 }
 ```
 
-**Response:**
+**响应：**
 ```json
 {
   "meta": { "project_name": "...", "confidence": 0.85 },
   "competitor_research": { "competitors": [...], "competitor_map": {...} },
-  "market_judgement": { "track_heat": 78, "demand_strength": 62, "competition_crowdedness": 40 },
+  "market_judgement": { "track_heat": 78, "demand_strength": 62, ... },
   "roi_estimation": { "scenarios": {...}, "recommendation": "GO" },
-  "strategy_advice": { "launch_strategy": "...", "mvp_do": [...], "mvp_not_do": [...], "roadmap": [...] }
+  "strategy_advice": { "launch_strategy": "...", "mvp_do": [...], ... }
 }
 ```
 
 ---
 
-### 📊 ROI Formulas
+### 📊 ROI公式
 
-**Monthly gross margin per user:**
+**单用户月毛利：**
 
 $$GM_t = p \times ARPPU \times r_t - c \times r_t$$
 
-**Lifetime value (discrete approximation):**
+**生命周期价值（3年周期）：**
 
 $$LTV_n = \sum_{t=1}^{n} \frac{GM_t}{(1+i)^t}$$
 
-**Go / Wait / No-Go rules:**
-- ✅ **Go** if baseline payback ≤ 9 months and conservative payback ≤ 15 months
-- ⏳ **Wait** if baseline payback is 9–15 months and optimization levers exist
-- 🚫 **No-Go** if baseline payback > 15 months or conservative case cannot pay back
+**做/不做决策：**
+- ✅ **应该做** 如果基准回本 ≤ 9个月 且 保守回本 ≤ 15个月
+- ⏳ **等等看** 如果基准 9-15个月 且存在优化杠杆
+- 🚫 **不应该做** 如果基准 > 15个月 或 保守永远无法回本
 
 ---
 
-### 🔌 Data Tools (Pluggable)
+### 🔌 数据工具（可插拔）
 
-| Tool | Status | Data Source |
+| 工具 | 状态 | 数据源 |
 |------|------|--------|
 | `search_trends` | 🟡 Mock | Google Trends / SerpAPI |
-| `traffic_estimation` | 🟢 Real | DataForSEO SimilarWeb API |
-| `content_heat` | 🟢 Real | YouTube Data API + Reddit API |
-| `review_sentiment` | 🟢 Real | App Store + Google Play + Reddit |
+| `traffic_estimation` | 🟢 真实 | DataForSEO SimilarWeb API |
+| `content_heat` | 🟢 真实 | YouTube Data API + Reddit API |
+| `review_sentiment` | 🟢 真实 | App Store + Google Play + Reddit |
 | `competitor_snapshot` | 🟡 Mock | ProductHunt API |
 
 ---
 
-### 📈 Version Roadmap
-
-| Version | Status | Focus |
-|------|------|------|
-| v0.1 | ✅ | Project skeleton + static responses |
-| v0.2 | ✅ | Tools + agent integration + UI visualization |
-| v0.3 | ✅ | Category generalization + real data integration |
-| v1.0 | 🔜 | Real LLM integration (GPT-4 / Claude) |
-| v1.5 | 📋 | Full API data sources |
-| v2.0 | 📋 | Historical project library + industry benchmarks |
-
----
-
-### 📄 License
+### 📄 开源协议
 
 MIT

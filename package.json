@@ -1,0 +1,16 @@
+{
+  "name": "predict-app",
+  "version": "0.1.0",
+  "description": "Product Prospect Analyzer - Full Stack Application",
+  "private": true,
+  "scripts": {
+    "setup": "powershell -ExecutionPolicy Bypass -File setup.ps1",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000",
+    "frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

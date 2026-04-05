@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>API 日志监控</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"SF Mono","Consolas","Menlo",monospace;background:#0f1117;color:#c9d1d9;font-size:12px}
+header{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid #21262d;background:#161b22}
+header h1{font-size:15px;font-weight:700;color:#f0f6fc}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-ph{background:#f7816622;color:#f78166;border:1px solid #f7816655}
+.badge-gt{background:#56d36422;color:#56d364;border:1px solid #56d36455}
+.badge-sa{background:#d2a8ff22;color:#d2a8ff;border:1px solid #d2a8ff55}
+.badge-yt{background:#ff6b6b22;color:#ff7b72;border:1px solid #ff7b7255}
+.badge-dfs{background:#ffa65722;color:#ffa657;border:1px solid #ffa65755}
+.badge-as{background:#7ee78722;color:#7ee787;border:1px solid #7ee78755}
+.badge-gp{background:#79c0ff22;color:#79c0ff;border:1px solid #79c0ff55}
+.badge-rd{background:#ffb86b22;color:#ffb86b;border:1px solid #ffb86b55}
+.badge-ok{background:#23863622;color:#3fb950;border:1px solid #23863655}
+.badge-err{background:#f8514922;color:#f85149;border:1px solid #f8514955}
+.controls{display:flex;gap:8px;margin-left:auto;align-items:center}
+.ctrl-btn{padding:5px 14px;border:1px solid #30363d;border-radius:6px;background:#21262d;color:#c9d1d9;cursor:pointer;font-size:12px}
+.ctrl-btn:hover{background:#30363d}
+.ctrl-btn.active{border-color:#388bfd;color:#79c0ff}
+.status-bar{padding:6px 18px;font-size:11px;color:#8b949e;border-bottom:1px solid #21262d;display:flex;gap:16px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3fb950;margin-right:4px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.filter-bar{padding:8px 18px;border-bottom:1px solid #21262d;display:flex;gap:8px;flex-wrap:wrap}
+.filter-btn{padding:4px 12px;border-radius:14px;border:1px solid #30363d;background:transparent;color:#8b949e;cursor:pointer;font-size:11px}
+.filter-btn.active{background:#388bfd22;border-color:#388bfd;color:#79c0ff}
+.log-list{display:flex;flex-direction:column}
+.log-item{border-bottom:1px solid #21262d;cursor:pointer}
+.log-item:hover .log-header{background:#1c2128}
+.log-header{display:grid;grid-template-columns:70px 90px 160px 1fr auto;gap:10px;align-items:center;padding:7px 18px}
+.log-body{display:none;padding:0 18px 12px;background:#0d1117}
+.log-body.open{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.panel{background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px}
+.panel h4{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#8b949e;margin-bottom:6px}
+pre{font-size:11px;line-height:1.55;max-height:360px;overflow:auto;white-space:pre-wrap;word-break:break-all;color:#e6edf3}
+.err-txt{color:#f85149}
+.ts-col{color:#8b949e;font-size:10px}
+.ms-col{color:#8b949e;font-size:10px;text-align:right}
+.query-col{color:#e6edf3;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.new-flash{animation:flash .6s ease}
+@keyframes flash{from{background:#388bfd18}to{background:transparent}}
+.empty{padding:60px;text-align:center;color:#8b949e}
+</style>
+</head>
+<body>
+<header>
+  <h1>API 日志监控</h1>
+  <span class="badge badge-ph" id="cnt-ph">PH 0</span>
+  <span class="badge badge-gt" id="cnt-gt">Trends 0</span>
+  <span class="badge badge-sa" id="cnt-sa">SerpAPI 0</span>
+  <span class="badge badge-yt" id="cnt-yt">YouTube 0</span>
+  <span class="badge badge-dfs" id="cnt-dfs">DataForSEO 0</span>
+  <span class="badge badge-as" id="cnt-as">AppStore 0</span>
+  <span class="badge badge-gp" id="cnt-gp">GooglePlay 0</span>
+  <span class="badge badge-rd" id="cnt-rd">Reddit 0</span>
+  <div class="controls">
+    <button class="ctrl-btn active" id="btn-auto" onclick="toggleAuto()">&#9210; 自动刷新</button>
+    <button class="ctrl-btn" onclick="fetchLogs()">&#8635; 刷新</button>
+    <button class="ctrl-btn" onclick="clearLogs()">&#128465; 清空</button>
+  </div>
+</header>
+<div class="status-bar">
+  <span><span class="dot"></span>实时监听主应用 API 调用</span>
+  <span id="status-txt">等待数据...</span>
+</div>
+<div class="filter-bar">
+  <button class="filter-btn active" data-src="all" onclick="setFilter(this)">全部</button>
+  <button class="filter-btn" data-src="producthunt" onclick="setFilter(this)">ProductHunt</button>
+  <button class="filter-btn" data-src="google_trends" onclick="setFilter(this)">Google Trends</button>
+  <button class="filter-btn" data-src="serpapi" onclick="setFilter(this)">SerpAPI</button>
+  <button class="filter-btn" data-src="youtube" onclick="setFilter(this)">YouTube</button>
+  <button class="filter-btn" data-src="dataforseo" onclick="setFilter(this)">DataForSEO</button>
+  <button class="filter-btn" data-src="app_store" onclick="setFilter(this)">App Store</button>
+  <button class="filter-btn" data-src="google_play" onclick="setFilter(this)">Google Play</button>
+  <button class="filter-btn" data-src="reddit" onclick="setFilter(this)">Reddit</button>
+  <button class="filter-btn" data-src="error" onclick="setFilter(this)">&#10060; 出错</button>
+</div>
+<div class="log-list" id="logList">
+  <div class="empty" id="emptyTip">
+    暂无日志。在主应用
+    (<a href="http://localhost:3000" style="color:#79c0ff">localhost:3000</a>)
+    发起一次分析请求，日志会自动出现在这里。
+  </div>
+</div>
+<script>
+let _auto=true,_timer=null,_filter='all',_knownIds=new Set(),_allItems=[];
+function srcBadge(s){
+  if(s==='producthunt')return '<span class="badge badge-ph">PH</span>';
+  if(s==='google_trends')return '<span class="badge badge-gt">Trends</span>';
+  if(s==='serpapi')return '<span class="badge badge-sa">SerpAPI</span>';
+  if(s==='youtube')return '<span class="badge badge-yt">YouTube</span>';
+  if(s==='dataforseo')return '<span class="badge badge-dfs">DataForSEO</span>';
+  if(s==='app_store')return '<span class="badge badge-as">AppStore</span>';
+  if(s==='google_play')return '<span class="badge badge-gp">GooglePlay</span>';
+  if(s==='reddit')return '<span class="badge badge-rd">Reddit</span>';
+  return s;
+}
+function okBadge(ok){return ok?'<span class="badge badge-ok">OK</span>':'<span class="badge badge-err">ERR</span>';}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmt(obj){if(!obj)return '<span class="err-txt">null</span>';return escH(JSON.stringify(obj,null,2));}
+function toggleAuto(){
+  _auto=!_auto;
+  const b=document.getElementById('btn-auto');
+  b.classList.toggle('active',_auto);
+  b.textContent=_auto?'\u23FA 自动刷新':'\u23F8 已暂停';
+  if(_auto)scheduleNext();
+}
+function setFilter(el){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');_filter=el.dataset.src;renderAll();
+}
+function matchFilter(item){
+  if(_filter==='all')return true;
+  if(_filter==='error')return !item.ok;
+  return item.source===_filter;
+}
+function renderAll(){
+  const list=document.getElementById('logList');
+  const visible=_allItems.filter(matchFilter);
+  if(!visible.length){list.innerHTML='<div class="empty">暂无符合条件的日志。</div>';return;}
+  const openIds=new Set();
+  document.querySelectorAll('.log-body.open').forEach(el=>openIds.add(el.dataset.id));
+  list.innerHTML='';
+  visible.forEach(function(item){
+    const ts=new Date(item.ts).toLocaleTimeString('zh-CN',{hour12:false});
+    const ms=item.elapsed_ms?item.elapsed_ms+'ms':'-';
+    const bodyId='body-'+item.id;
+    list.insertAdjacentHTML('beforeend',
+      '<div class="log-item" id="row-'+item.id+'">'
+      +'<div class="log-header" onclick="toggle(\''+item.id+'\')">'
+      +srcBadge(item.source)+okBadge(item.ok)
+      +'<span class="ts-col">'+ts+'</span>'
+      +'<span class="query-col">'+escH(item.query)+'</span>'
+      +'<span class="ms-col">'+ms+'</span>'
+      +'</div>'
+      +'<div class="log-body'+(openIds.has(item.id)?' open':'')+'" id="'+bodyId+'" data-id="'+item.id+'">'
+      +'<div class="panel"><h4>请求参数</h4><pre>'+fmt(item.params)+'</pre></div>'
+      +'<div class="panel"><h4>'+(item.error?'错误':'响应数据')+'</h4>'
+      +'<pre>'+(item.error?'<span class="err-txt">'+escH(item.error)+'</span>':fmt(item.response))+'</pre>'
+      +'</div></div></div>'
+    );
+  });
+}
+function toggle(id){var b=document.getElementById('body-'+id);if(b)b.classList.toggle('open');}
+async function fetchLogs(){
+  try{
+    const r=await fetch('/debug/logs');
+    const data=await r.json();
+    _allItems=data.items||[];
+    document.getElementById('cnt-ph').textContent='PH '+_allItems.filter(function(x){return x.source==='producthunt';}).length;
+    document.getElementById('cnt-gt').textContent='Trends '+_allItems.filter(function(x){return x.source==='google_trends';}).length;
+    document.getElementById('cnt-sa').textContent='SerpAPI '+_allItems.filter(function(x){return x.source==='serpapi';}).length;
+    document.getElementById('cnt-yt').textContent='YouTube '+_allItems.filter(function(x){return x.source==='youtube';}).length;
+    document.getElementById('cnt-dfs').textContent='DataForSEO '+_allItems.filter(function(x){return x.source==='dataforseo';}).length;
+    document.getElementById('cnt-as').textContent='AppStore '+_allItems.filter(function(x){return x.source==='app_store';}).length;
+    document.getElementById('cnt-gp').textContent='GooglePlay '+_allItems.filter(function(x){return x.source==='google_play';}).length;
+    document.getElementById('cnt-rd').textContent='Reddit '+_allItems.filter(function(x){return x.source==='reddit';}).length;
+    const newIds=_allItems.map(function(x){return x.id;}).filter(function(id){return !_knownIds.has(id);});
+    _allItems.forEach(function(x){_knownIds.add(x.id);});
+    renderAll();
+    newIds.forEach(function(id){var r=document.getElementById('row-'+id);if(r)r.classList.add('new-flash');});
+    document.getElementById('status-txt').textContent='共 '+data.count+' 条 · 最后刷新 '+new Date().toLocaleTimeString('zh-CN',{hour12:false});
+  }catch(e){document.getElementById('status-txt').textContent='刷新失败: '+e.message;}
+}
+async function clearLogs(){
+  await fetch('/debug/logs',{method:'DELETE'});
+  _allItems=[];_knownIds.clear();renderAll();
+  document.getElementById('status-txt').textContent='已清空';
+}
+function scheduleNext(){clearTimeout(_timer);if(_auto)_timer=setTimeout(async function(){await fetchLogs();scheduleNext();},2500);}
+fetchLogs();scheduleNext();
+</script>
+</body>
+</html>
